@@ -1,0 +1,7 @@
+config:
+  input: "excel"
+  format: "json"
+  excludes: "item.xlsx"
+  output:
+    client: "/out/client"
+    server: "/out/server"
