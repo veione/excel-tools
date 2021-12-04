@@ -47,7 +47,7 @@ func ReadFiles(path string) ([]string, error) {
 
 	var s []string
 	for _, fi := range rd {
-		if !fi.IsDir() {
+		if !fi.IsDir() && strings.HasSuffix(fi.Name(), "xlsx") || strings.HasSuffix(fi.Name(), "xls") {
 			fullName := path + "/" + fi.Name()
 			s = append(s, fullName)
 		}
@@ -61,9 +61,9 @@ func main() {
 	// 导出工厂
 	exportFactory := export.FileExportFactory{}
 	// 根据导出格式获取导出实现对象
-	export := exportFactory.GetExport(conf.Config.Format)
+	exp := exportFactory.GetExport(conf.Config.Format)
 
-	fmt.Printf("Use %x format to export file\n", export)
+	fmt.Printf("Use %x format to export file\n", exp)
 
 	files, err := ReadFiles(conf.Config.Input)
 	if err != nil {
@@ -98,9 +98,15 @@ func main() {
 			names := rows[1]
 			// 第三行类型
 			types := rows[2]
-			// 第四行位置
+			// 第四行输出端
 			sides := rows[3]
 			fmt.Println(notes, names, types, sides)
+
+			// 存储客户端/服务器列表
+			var clients []map[string]interface{}
+			var servers []map[string]interface{}
+			fmt.Println(clients)
+			fmt.Println(servers)
 
 			for rowIndex, row := range rows {
 				if rowIndex < 4 {
