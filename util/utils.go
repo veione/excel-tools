@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -137,4 +138,24 @@ func ConvertToFormatDay(excelDaysString string) string {
 	baseOriginSecond := 1136185445
 	resultTime := time.Unix(int64(baseOriginSecond+realDiffSecond), 0).Format("2006-01-02")
 	return resultTime
+}
+
+// MemberInArray 元素是否在数组内
+func MemberInArray(target string, array []string) bool {
+	sort.Strings(array)
+	index := sort.SearchStrings(array, target)
+	if index < len(array) && array[index] == target {
+		return true
+	}
+	return false
+}
+
+// ArrayContainMember 数组是否包含元素
+func ArrayContainMember(target string, array []string) bool {
+	for _, ele := range array {
+		if strings.Contains(target, ele) {
+			return true
+		}
+	}
+	return false
 }

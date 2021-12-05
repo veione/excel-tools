@@ -1,40 +1,49 @@
 package main
 
 import (
-	"encoding/json"
 	"excel-tools/export"
-	tps "excel-tools/types"
+	"excel-tools/types"
 	"excel-tools/util"
 	"fmt"
-	"github.com/tidwall/gjson"
 	"github.com/xuri/excelize/v2"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
+	"os"
 	"strings"
+	"time"
 )
 
 // Conf of yaml struct
 type Conf struct {
 	Config struct {
-		Input    string
-		Format   string
+		// 输入文件目录
+		Input string
+		// 过滤文件
 		Excludes string
-	}
-	Output struct {
-		Client string
-		Server string
+		Output   struct {
+			// 输出格式
+			Format string
+			// 输出是否格式化
+			Pretty bool
+			// 是否开启单个文件为对象
+			Single bool
+			// 客户端输出目录
+			Client string
+			// 服务端输出目录
+			Server string
+		}
 	}
 }
 
 // ReadConf 读取配置文件
 func ReadConf() Conf {
 	var conf Conf
-	yamlFile, err := ioutil.ReadFile("conf.yaml")
+	f, err := ioutil.ReadFile("conf.yaml")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 	// 将读取的yaml文件解析为struct
-	err = yaml.Unmarshal(yamlFile, &conf)
+	err = yaml.Unmarshal(f, &conf)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -61,22 +70,39 @@ func ReadFiles(path string) ([]string, error) {
 
 func main() {
 	conf := ReadConf()
-	fmt.Printf("Input excel directory: %s, format: %s, excludes: %s\r\n", conf.Config.Input, conf.Config.Format, conf.Config.Excludes)
+	fmt.Printf("input excel directory: %s, excludes: %s\r\n", conf.Config.Input, conf.Config.Excludes)
 	// 导出工厂
 	exportFactory := export.FileExportFactory{}
 	// 类型工厂
-	typeFactory := tps.TypeFactory{}
+	typeFactory := types.TypeFactory{}
 	// 根据导出格式获取导出实现对象
-	exp := exportFactory.GetExport(conf.Config.Format)
-
-	fmt.Printf("Use %x format to export file\n", exp)
+	exp := exportFactory.GetExport(conf.Config.Output.Format)
 
 	files, err := ReadFiles(conf.Config.Input)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	fmt.Printf("Read files: %s\n", files)
+	fmt.Printf("read files: %s\n", files)
+
+	// 过滤文件
+	var excludes []string
+	if len(conf.Config.Excludes) > 0 {
+		excludes = strings.Split(conf.Config.Excludes, ",")
+	}
+
+	// 统计数据
+	var (
+		start   = time.Now()
+		succeed = 0
+		total   = 0
+	)
+
 	for _, file := range files {
+		if len(excludes) > 0 && util.ArrayContainMember(file, excludes) {
+			fmt.Printf("skip file %s\r\n", file)
+			continue
+		}
+
 		f, err := excelize.OpenFile(file)
 		if err != nil {
 			fmt.Println(err)
@@ -91,22 +117,20 @@ func main() {
 			if strings.HasPrefix(sheet, "#") {
 				continue
 			}
-
+			total++
 			rows, err := f.GetRows(sheet)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
-
 			// 第一行注释
 			notes := rows[0]
 			// 第二行字段名
 			names := rows[1]
 			// 第三行类型
-			types := rows[2]
+			forms := rows[2]
 			// 第四行输出端
 			outs := rows[3]
-			fmt.Println(notes, names, types, outs)
 
 			// 存储客户端/服务器列表
 			var clients []map[string]interface{}
@@ -128,11 +152,11 @@ func main() {
 					}
 
 					name := names[colIndex]
-					colType := types[colIndex]
+					form := forms[colIndex]
 					out := outs[colIndex]
 					if value != "" {
 						// 类型转换
-						value := typeFactory.GetConvert(colType).Handle(value)
+						value := typeFactory.GetConvert(form).Handle(value)
 
 						// 如果列输出类型为空或者包含cs或者sc表示会全部输出
 						if out == "" || strings.Contains(out, "cs") || strings.Contains(out, "sc") {
@@ -152,43 +176,16 @@ func main() {
 				if len(server) > 0 {
 					servers = append(servers, server)
 				}
-				fmt.Println()
 			}
 
-			if data, err := json.Marshal(clients); err != nil {
-				fmt.Println(err.Error())
-			} else {
-				fmt.Println("客户端结果：" + string(data))
-			}
-			fmt.Println()
-			if data, err := json.Marshal(servers); err != nil {
-				fmt.Println(err.Error())
-			} else {
-				fmt.Println("服务器结果：" + string(data))
-			}
+			// 写出到文件
+			clientDst := fmt.Sprintf("%s%s%s%s", conf.Config.Output.Client, string(os.PathSeparator), sheet, ".json")
+			serverDst := fmt.Sprintf("%s%s%s%s", conf.Config.Output.Server, string(os.PathSeparator), sheet, ".json")
+			exp.Export(clientDst, conf.Config.Output.Pretty, conf.Config.Output.Single, clients)
+			exp.Export(serverDst, conf.Config.Output.Pretty, conf.Config.Output.Single, servers)
+			succeed++
 		}
 	}
-}
-
-func test() {
-	timeString := util.FormatTimeString("2021-12-12 00:00:00")
-	fmt.Println("日期转换：" + timeString)
-
-	jsonValue := `{"itemId": 1001, "num": 100}`
-	js := gjson.Parse(jsonValue)
-	fmt.Println(js.Map())
-	fmt.Println(gjson.Valid(jsonValue))
-
-	fmt.Println(gjson.Parse(`[1001, 1002, 1003]`).Array())
-
-	//1001:100,1002:300
-	val := "10001:100,10002:200"
-	arr := strings.Split(val, ",")
-	values := make(map[string]interface{})
-	for _, str := range arr {
-		split := strings.Split(str, ":")
-		values[split[0]] = split[1]
-	}
-
-	fmt.Println(values)
+	fmt.Println("export finished, enjoy it! :)")
+	fmt.Printf("total: %d, succeed: %d, fail: %d, time consuming: %d(ms)", total, succeed, total-succeed, time.Now().Sub(start).Milliseconds())
 }

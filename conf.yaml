@@ -1,7 +1,17 @@
 config:
-  input: "excel"
-  format: "json"
-  excludes: "item.xlsx"
+  # Excel输入目录
+  input: excel
+  # 过滤的输入目录下的文件,多个采用,分割
+  excludes: template.xlsx,shop.xlsx,mail.xlsx
+  # 输出配置
   output:
-    client: "/out/client"
-    server: "/out/server"
+    # 是否格式化输出
+    pretty: true
+    # 这个暂时写死JSON,后期考虑扩展导出csv等其它格式
+    format: json
+    # 是否允许当只有一条记录的情况下自动转换为JSON对象导出,目前多条记录导出是数组格式
+    single: true
+    # 客户端导出的目录
+    client: out/client
+    # 服务端导出的目录
+    server: out/server
