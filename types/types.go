@@ -26,6 +26,20 @@ func (*NumberTypeConvert) Handle(value string) interface{} {
 	return value
 }
 
+type IntTypeConvert struct{}
+
+// Handle 数字类型转换
+func (*IntTypeConvert) Handle(value string) interface{} {
+	return convert.Str2Int(value)
+}
+
+type FloatTypeConvert struct{}
+
+// Handle 数字类型转换
+func (*FloatTypeConvert) Handle(value string) interface{} {
+	return convert.Str2Float32(value)
+}
+
 type BoolTypeConverter struct{}
 
 // Handle 整型数据转换
@@ -103,6 +117,10 @@ func (*TypeFactory) GetConvert(types string) (conv TypeConverter) {
 	switch types {
 	case "number":
 		conv = new(NumberTypeConvert)
+	case "int":
+		conv = new(IntTypeConvert)
+	case "float":
+		conv = new(FloatTypeConvert)
 	case "bool":
 		conv = new(BoolTypeConverter)
 	case "date":
