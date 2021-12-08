@@ -2,7 +2,7 @@ config:
   # Excel输入目录
   input: excel
   # 过滤的输入目录下的文件,多个采用,分割
-  excludes: template.xlsx,shop.xlsx,mail.xlsx
+  excludes: template.xlsx,defaultNpcData.xlsx
   # 输出配置
   output:
     # 是否格式化输出

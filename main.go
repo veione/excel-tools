@@ -35,6 +35,13 @@ type Conf struct {
 	}
 }
 
+// MergeCell 合并单元格
+type MergeCell struct {
+	col   int
+	row   int
+	value string
+}
+
 // ReadConf 读取配置文件
 func ReadConf() Conf {
 	var conf Conf
@@ -110,8 +117,7 @@ func main() {
 		}
 
 		sheets := f.GetSheetList()
-		for index := range sheets {
-			sheet := sheets[index]
+		for _, sheet := range sheets {
 
 			// 如果sheet页以#号开头表示忽略该sheet
 			if strings.HasPrefix(sheet, "#") {
@@ -131,6 +137,24 @@ func main() {
 			forms := rows[2]
 			// 第四行输出端
 			outs := rows[3]
+			// 合并单元格
+			cells, _ := f.GetMergeCells(sheet)
+			// 合并单元格值
+			var mergeValues []MergeCell
+
+			if len(cells) > 0 {
+				for _, cell := range cells {
+					startCol, startRow, _ := excelize.CellNameToCoordinates(cell.GetStartAxis())
+					endCol, endRow, _ := excelize.CellNameToCoordinates(cell.GetEndAxis())
+					for j := startRow - 1; j <= endRow-1; j++ {
+						for i := startCol - 1; i <= endCol-1; i++ {
+							mergeValues = append(mergeValues, MergeCell{
+								i, j, cell.GetCellValue(),
+							})
+						}
+					}
+				}
+			}
 
 			// 存储客户端/服务器列表
 			var clients []map[string]interface{}
@@ -149,6 +173,15 @@ func main() {
 					// 如果注释标记有#号表示忽略该字段
 					if strings.HasPrefix(note, "#") {
 						continue
+					}
+
+					if value == "" {
+						for _, cell := range mergeValues {
+							if cell.col == colIndex && cell.row == rowIndex {
+								value = cell.value
+								break
+							}
+						}
 					}
 
 					name := names[colIndex]

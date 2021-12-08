@@ -40,6 +40,13 @@ func (*FloatTypeConvert) Handle(value string) interface{} {
 	return convert.Str2Float32(value)
 }
 
+type LongTypeConvert struct{}
+
+// Handle 数字类型转换
+func (*LongTypeConvert) Handle(value string) interface{} {
+	return convert.Str2Int64(value)
+}
+
 type BoolTypeConverter struct{}
 
 // Handle 整型数据转换
@@ -121,6 +128,8 @@ func (*TypeFactory) GetConvert(types string) (conv TypeConverter) {
 		conv = new(IntTypeConvert)
 	case "float":
 		conv = new(FloatTypeConvert)
+	case "long":
+		conv = new(LongTypeConvert)
 	case "bool":
 		conv = new(BoolTypeConverter)
 	case "date":

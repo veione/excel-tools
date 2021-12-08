@@ -350,10 +350,10 @@ func Str2Float32WithDefaultValue(val string, defaultVal float32) float32 {
 
 // Str2Bool Convert string to bool, panic when the string is not of a valid bool format
 func Str2Bool(val string) bool {
-	if val == "true" || val == "True" || val == "TRUE" {
+	if val == "1" || val == "true" || val == "True" || val == "TRUE" {
 		return true
 	}
-	if val == "false" || val == "False" || val == "FALSE" {
+	if val == "0" || val == "false" || val == "False" || val == "FALSE" {
 		return false
 	}
 	panic(errors.New("could not resolve bool value:" + val))
