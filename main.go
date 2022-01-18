@@ -123,6 +123,7 @@ func main() {
 			if strings.HasPrefix(sheet, "#") {
 				continue
 			}
+			fmt.Printf("Parse sheet: %s, file: %s\r\n", sheet, file)
 			total++
 			rows, err := f.GetRows(sheet)
 			if err != nil {
