@@ -78,6 +78,9 @@ func (*ObjectTypeConverter) Handle(value string) interface{} {
 			return parse.Value()
 		}
 		panic("Invalid value for json object: " + value)
+	} else if strings.TrimSpace(value) == "" {
+		values := make(map[string]interface{})
+		return values
 	} else {
 		// 特殊处理：10001:100,10002:200
 		arr := strings.Split(value, ",")
@@ -97,13 +100,29 @@ type ArrayTypeConverter struct{}
 
 // Handle 数组转换
 func (*ArrayTypeConverter) Handle(value string) interface{} {
-	if gjson.Valid(value) {
+	// 以标准方式：[1001, 1002]
+	if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") && gjson.Valid(value) {
 		parse := gjson.Parse(value)
 		if parse.IsArray() {
 			return parse.Array()
 		}
 		panic("Invalid value for json array: " + value)
+	} else if strings.TrimSpace(value) == "" {
+		// 空字符串则直接返回空数组即可
+		result := make([]interface{}, 0)
+		return result
+	} else if !strings.ContainsAny(value, ",") {
+		// 单个方式: 10010
+		result := make([]interface{}, 0)
+		numCvt := new(NumberTypeConvert)
+		if util.IsNumber(value) {
+			result = append(result, numCvt.Handle(value))
+		} else if len(value) > 0 {
+			result = append(result, value)
+		}
+		return result
 	} else {
+		// 多个方式：10001, 10002, 1003
 		// 如果不是合法的json array格式则采用 123,456,789这种字符串分隔符的方式进行处理
 		arr := strings.Split(value, `,`)
 		result := make([]interface{}, 0)
@@ -111,7 +130,7 @@ func (*ArrayTypeConverter) Handle(value string) interface{} {
 		for _, str := range arr {
 			if util.IsNumber(str) {
 				result = append(result, numCvt.Handle(str))
-			} else {
+			} else if len(str) > 0 {
 				result = append(result, str)
 			}
 		}

@@ -188,7 +188,8 @@ func main() {
 					name := names[colIndex]
 					form := forms[colIndex]
 					out := outs[colIndex]
-					if value != "" {
+
+					if value != "" || (form == "string" || form == "array" || form == "object") {
 						// 类型转换
 						value := typeFactory.GetConvert(form).Handle(value)
 
