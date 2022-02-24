@@ -138,6 +138,65 @@ func (*ArrayTypeConverter) Handle(value string) interface{} {
 	}
 }
 
+type PairTypeConverter struct{}
+
+// Handle 键值转换
+func (*PairTypeConverter) Handle(value string) interface{} {
+	if gjson.Valid(value) {
+		parse := gjson.Parse(value)
+		if parse.IsObject() {
+			return parse.Value()
+		}
+		panic("Invalid value for json object: " + value)
+	} else if strings.TrimSpace(value) == "" {
+		values := make(map[string]interface{})
+		return values
+	} else {
+		// 特殊处理：10001:100,10002:200 -> Pair(10010, 100)
+		arr := strings.Split(value, ",")
+		values := make(map[string]interface{})
+		for _, str := range arr {
+			v := strings.Split(str, ":")
+			if len(v) < 2 {
+				panic("Invalid value for object: " + value)
+			}
+			values["x"] = convert.Str2Int(v[0])
+			values["y"] = convert.Str2Int(v[1])
+		}
+		return values
+	}
+}
+
+type TripleTypeConverter struct{}
+
+// Handle 三键值转换
+func (*TripleTypeConverter) Handle(value string) interface{} {
+	if gjson.Valid(value) {
+		parse := gjson.Parse(value)
+		if parse.IsObject() {
+			return parse.Value()
+		}
+		panic("Invalid value for json object: " + value)
+	} else if strings.TrimSpace(value) == "" {
+		values := make(map[string]interface{})
+		return values
+	} else {
+		// 特殊处理：10001:100:1,10002:200:1 -> Triple(10010, 100, 1)
+		arr := strings.Split(value, ",")
+		values := make(map[string]interface{})
+		for _, str := range arr {
+			v := strings.Split(str, ":")
+			if len(v) < 3 {
+				panic("Invalid value for object: " + value)
+			}
+			values["x"] = convert.Str2Int(v[0])
+			values["y"] = convert.Str2Int(v[1])
+			values["z"] = convert.Str2Int(v[2])
+		}
+		return values
+	}
+}
+
 type TypeFactory struct {
 }
 
@@ -162,6 +221,10 @@ func (*TypeFactory) GetConvert(types string) (conv TypeConverter) {
 		conv = new(ArrayTypeConverter)
 	case "string":
 		conv = new(StringTypeConverter)
+	case "pair":
+		conv = new(PairTypeConverter)
+	case "triple":
+		conv = new(TripleTypeConverter)
 	default:
 		conv = new(StringTypeConverter)
 	}
