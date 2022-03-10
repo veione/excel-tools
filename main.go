@@ -187,14 +187,14 @@ func main() {
 
 					name := names[colIndex]
 					form := forms[colIndex]
-					out := outs[colIndex]
 
 					if value != "" || (form == "string" || form == "array" || form == "object") {
 						// 类型转换
 						value := typeFactory.GetConvert(form).Handle(value)
 
+						out := outs[colIndex]
 						// 如果列输出类型为空或者包含cs或者sc表示会全部输出
-						if out == "" || strings.Contains(out, "cs") || strings.Contains(out, "sc") {
+						if strings.Contains(out, "cs") || strings.Contains(out, "sc") {
 							client[name] = value
 							server[name] = value
 						} else if strings.Contains(out, "c") {
