@@ -225,6 +225,10 @@ func (*TypeFactory) GetConvert(types string) (conv TypeConverter) {
 		conv = new(PairTypeConverter)
 	case "triple":
 		conv = new(TripleTypeConverter)
+	case "int[]":
+		conv = new(ArrayTypeConverter)
+	case "string[]":
+		conv = new(ArrayTypeConverter)
 	default:
 		conv = new(StringTypeConverter)
 	}
