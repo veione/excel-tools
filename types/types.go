@@ -96,6 +96,34 @@ func (*ObjectTypeConverter) Handle(value string) interface{} {
 	}
 }
 
+type ObjectStringTypeConverter struct{}
+
+// Handle 对象转换
+func (*ObjectStringTypeConverter) Handle(value string) interface{} {
+	if gjson.Valid(value) {
+		parse := gjson.Parse(value)
+		if parse.IsObject() {
+			return parse.Value()
+		}
+		panic("Invalid value for json object: " + value)
+	} else if strings.TrimSpace(value) == "" {
+		values := make(map[string]interface{})
+		return values
+	} else {
+		// 特殊处理：10001:100,10002:200
+		arr := strings.Split(value, ",")
+		values := make(map[string]interface{})
+		for _, str := range arr {
+			v := strings.Split(str, ":")
+			if len(v) < 2 {
+				panic("Invalid value for object: " + value)
+			}
+			values[v[0]] = v[1]
+		}
+		return values
+	}
+}
+
 type ArrayTypeConverter struct{}
 
 // Handle 数组转换
@@ -229,6 +257,8 @@ func (*TypeFactory) GetConvert(types string) (conv TypeConverter) {
 		conv = new(ArrayTypeConverter)
 	case "string[]":
 		conv = new(ArrayTypeConverter)
+	case "map<string>":
+		conv = new(ObjectStringTypeConverter)
 	default:
 		conv = new(StringTypeConverter)
 	}
