@@ -169,7 +169,16 @@ func main() {
 				client := make(map[string]interface{})
 				server := make(map[string]interface{})
 
-				for colIndex, value := range row {
+				//做一些特殊单元格为空的修正
+				values := row[0:]
+				size := len(rows[0]) - len(row)
+				if size > 0 {
+					for i := 0; i < size; i++ {
+						values = append(values, "")
+					}
+				}
+
+				for colIndex, value := range values {
 					note := notes[colIndex]
 					// 如果注释标记有#号表示忽略该字段
 					if strings.HasPrefix(note, "#") {
