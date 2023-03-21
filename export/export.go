@@ -17,6 +17,9 @@ type JsonExport struct{}
 
 // Export JSON格式导出
 func (*JsonExport) Export(dst string, pretty bool, allowSingle bool, values []map[string]interface{}) {
+	if len(values) == 0 {
+		return
+	}
 	path, _ := filepath.Split(dst)
 	if _, err := os.Stat(path); err != nil {
 		err := os.MkdirAll(path, os.ModePerm)

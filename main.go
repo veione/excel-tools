@@ -194,8 +194,8 @@ func main() {
 						}
 					}
 
-					name := names[colIndex]
-					form := forms[colIndex]
+					name := strings.TrimSpace(names[colIndex])
+					form := strings.TrimSpace(forms[colIndex])
 
 					if value != "" || (form == "string" || form == "array" || form == "object") {
 						// 类型转换

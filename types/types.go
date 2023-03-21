@@ -87,8 +87,8 @@ func (*ObjectTypeConverter) Handle(value string) interface{} {
 		values := make(map[string]interface{})
 		for _, str := range arr {
 			v := strings.Split(str, ":")
-			if len(v) < 2 {
-				panic("Invalid value for object: " + value)
+			if len(v) < 2 || v[0] == "" || v[1] == "" {
+				panic("瞎配数据，也不检查报错了吧:) " + value)
 			}
 			values[v[0]] = convert.Str2Int(v[1])
 		}
